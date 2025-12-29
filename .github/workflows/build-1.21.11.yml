@@ -32,6 +32,10 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Test Gradle Configuration
+        run: ./gradlew tasks --stacktrace
+        continue-on-error: true
+
       - name: Build Fabric for Minecraft 1.21.11
         run: ./gradlew :fabric:build --stacktrace
         env:
