@@ -32,12 +32,11 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Test Gradle Configuration
-        run: ./gradlew tasks --stacktrace
-        continue-on-error: true
+      - name: Validate Gradle Wrapper
+        run: ./gradlew --version
 
       - name: Build Fabric for Minecraft 1.21.11
-        run: ./gradlew :fabric:build --stacktrace
+        run: ./gradlew clean :fabric:build --no-daemon --stacktrace
         env:
           MINECRAFT_VERSION: 1.21.11
 

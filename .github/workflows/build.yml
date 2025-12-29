@@ -10,36 +10,45 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: setup JDK${{ matrix.java }}
-        uses: actions/setup-java@v1
+      - name: Setup JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
+          distribution: 'temurin'
 
-      - uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/loom-cache
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle
+          cache-read-only: false
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
       - name: Build Fabric
-        run: ./gradlew :fabric:build
+        run: ./gradlew clean :fabric:build --no-daemon --stacktrace
 
       - name: Build NeoForge
-        run: ./gradlew :neoforge:build
+        run: ./gradlew :neoforge:build --no-daemon --stacktrace
 
 #      - name: Build Forge
-#        run: ./gradlew :forge:build
+#        run: ./gradlew :forge:build --no-daemon --stacktrace
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4.4.0
+        uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: |
             fabric/build/libs/
             neoforge/build/libs/
 #           forge/build/libs/
+
+      - name: Upload Build Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            **/build/reports/
+            **/build/*.log
