@@ -1,15 +1,21 @@
-name: Build
-on: [ pull_request, push ]
+name: Build Minecraft 1.21.11
+
+on:
+  push:
+    branches: [ main, copilot/update-to-minecraft-12111 ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         java: [ 21 ]
-    runs-on: ubuntu-latest
+    
     steps:
-
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup JDK ${{ matrix.java }}
@@ -26,23 +32,22 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build Fabric
+      - name: Validate Gradle Wrapper
+        run: ./gradlew --version
+
+      - name: Build Fabric for Minecraft 1.21.11
         run: ./gradlew clean :fabric:build --no-daemon --stacktrace
+        env:
+          MINECRAFT_VERSION: 1.21.11
 
-      - name: Build NeoForge
-        run: ./gradlew :neoforge:build --no-daemon --stacktrace
-
-#      - name: Build Forge
-#        run: ./gradlew :forge:build --no-daemon --stacktrace
-
-      - name: Upload Artifacts
+      - name: Upload Fabric Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
+          name: emi-fabric-1.21.11
           path: |
-            fabric/build/libs/
-            neoforge/build/libs/
-#           forge/build/libs/
+            fabric/build/libs/*.jar
+            !fabric/build/libs/*-dev-shadow.jar
+          if-no-files-found: error
 
       - name: Upload Build Logs on Failure
         if: failure()
