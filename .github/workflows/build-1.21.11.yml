@@ -1,0 +1,56 @@
+name: Build Minecraft 1.21.11
+
+on:
+  push:
+    branches: [ main, copilot/update-to-minecraft-12111 ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 21 ]
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Fabric for Minecraft 1.21.11
+        run: ./gradlew :fabric:build --stacktrace
+        env:
+          MINECRAFT_VERSION: 1.21.11
+
+      - name: Upload Fabric Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: emi-fabric-1.21.11
+          path: |
+            fabric/build/libs/*.jar
+            !fabric/build/libs/*-dev-shadow.jar
+          if-no-files-found: error
+
+      - name: Upload Build Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            **/build/reports/
+            **/build/*.log
